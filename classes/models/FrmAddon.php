@@ -318,10 +318,10 @@ class FrmAddon {
 			}
 
 			$is_valid = false;
-			if ( 'valid' === $response['status'] ) {
+//			if ( 'valid' === $response['status'] ) {
 				$is_valid = 'valid';
 				$response['success'] = true;
-			}
+//			}
 			$this->set_active( $is_valid );
 		}
 

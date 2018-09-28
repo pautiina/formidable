@@ -242,7 +242,7 @@ class FrmProContent {
 	 */
 	public static function get_pretty_url( $atts ) {
 		global $post;
-		$base_url = untrailingslashit( $post ? get_permalink( $post->ID ) : $_SERVER['REQUEST_URI'] );
+		$base_url = untrailingslashit( $post ? get_permalink( $post->ID ) : FrmAppHelper::get_server_value( 'REQUEST_URI' ) );
 		if ( ! is_front_page() && self::rewriting_on() ) {
 			$url = $base_url . '/' . $atts['param'] . '/' . $atts['param_value'];
 		} else {
@@ -578,7 +578,18 @@ class FrmProContent {
 					$replace_with = '';
 				}
 			}
-		} elseif ( ( $field && $field->type == 'user_id' ) || in_array( $tag, array( 'updated_by', 'created_by' ) ) ) {
+
+			// Get the linked field to properly evaluate conditions
+			if ( $replace_with !== '' && isset( $atts['show'] ) && ! empty( $atts['show'] ) ) {
+				$show_field = FrmField::getOne( $atts['show'] );
+				if ( $show_field && in_array( $show_field->type, array( 'time', 'date', 'user_id' ) ) ) {
+					$field = $show_field;
+					unset( $atts['show'] );
+				}
+			}
+		}
+
+		if ( ( $field && $field->type == 'user_id' ) || in_array( $tag, array( 'updated_by', 'created_by' ) ) ) {
 			// check if conditional is for current user
 			if ( isset( $atts['equals'] ) && $atts['equals'] == 'current' ) {
 				$atts['equals'] = get_current_user_id();

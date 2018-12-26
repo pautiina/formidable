@@ -85,10 +85,11 @@ class FrmHooksController {
 		add_action( 'admin_init', 'FrmAppController::admin_init', 11 );
 		add_filter( 'plugin_action_links_' . FrmAppHelper::plugin_folder() . '/formidable.php', 'FrmAppController::settings_link' );
 		add_filter( 'admin_footer_text', 'FrmAppController::set_footer_text' );
+		add_action( 'wp_ajax_frm_dismiss_review', 'FrmAppController::dismiss_review' );
 
 		// Addons Controller
 		add_action( 'admin_menu', 'FrmAddonsController::menu', 100 );
-		add_filter( 'upgrader_pre_download', 'FrmAddonsController::add_shorten_edd_filename_filter', 10, 4 );
+		add_filter( 'pre_set_site_transient_update_plugins', 'FrmAddonsController::check_update' );
 
         // Entries Controller
         add_action( 'admin_menu', 'FrmEntriesController::menu', 12 );
@@ -118,6 +119,7 @@ class FrmHooksController {
         // Settings Controller
         add_action( 'admin_menu', 'FrmSettingsController::menu', 45 );
         add_action( 'frm_before_settings', 'FrmSettingsController::license_box' );
+		add_action( 'frm_after_settings', 'FrmSettingsController::settings_cta' );
 		add_action( 'wp_ajax_frm_settings_tab', 'FrmSettingsController::load_settings_tab' );
 
         // Styles Controller
@@ -136,7 +138,7 @@ class FrmHooksController {
 		// Addons
 		add_action( 'wp_ajax_frm_addon_activate', 'FrmAddon::activate' );
 		add_action( 'wp_ajax_frm_addon_deactivate', 'FrmAddon::deactivate' );
-		add_action( 'wp_ajax_frm_fill_licenses', 'FrmAddonsController::get_licenses' );
+		add_action( 'wp_ajax_frm_install_addon', 'FrmAddonsController::ajax_install_addon' );
 
         // Fields Controller
         add_action( 'wp_ajax_frm_load_field', 'FrmFieldsController::load_field' );
@@ -160,6 +162,9 @@ class FrmHooksController {
         add_action( 'wp_ajax_frm_get_shortcode_opts', 'FrmFormsController::get_shortcode_opts' );
         add_action( 'wp_ajax_frm_forms_preview', 'FrmFormsController::preview' );
         add_action( 'wp_ajax_nopriv_frm_forms_preview', 'FrmFormsController::preview' );
+
+		// Settings
+		add_action( 'wp_ajax_frm_lite_settings_upgrade', 'FrmSettingsController::settings_cta_dismiss' );
 
         // Styles Controller
         add_action( 'wp_ajax_frm_settings_reset', 'FrmStylesController::reset_styling' );

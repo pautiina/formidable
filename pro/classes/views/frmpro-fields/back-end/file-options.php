@@ -1,48 +1,49 @@
 <tr>
 	<td>
-		<label><?php _e( 'Multiple files', 'formidable-pro' ) ?></label>
+		<label><?php esc_html_e( 'Multiple files', 'formidable-pro' ); ?></label>
 	</td>
 	<td>
 		<label for="multiple_<?php echo esc_attr( $field['id'] ) ?>">
 			<input type="checkbox" name="field_options[multiple_<?php echo esc_attr( $field['id'] ) ?>]" id="multiple_<?php echo esc_attr( $field['id'] ) ?>" value="1" <?php echo checked( $field['multiple'], 1 ) ?> onchange="frm_show_div('limit_file_count_<?php echo absint( $field['id'] ) ?>',this.checked,true,'#')" />
-			<?php _e( 'allow multiple files to be uploaded to this field', 'formidable-pro' ) ?>
+			<?php esc_html_e( 'allow multiple files to be uploaded to this field', 'formidable-pro' ); ?>
 		</label>
 	</td>
 </tr>
 <tr>
 	<td>
-		<label><?php _e( 'Delete files', 'formidable-pro' ) ?></label>
+		<label><?php esc_html_e( 'Delete files', 'formidable-pro' ); ?></label>
 	</td>
 	<td>
 		<label for="delete_<?php echo esc_attr( $field['id'] ) ?>">
 			<input type="checkbox" name="field_options[delete_<?php echo esc_attr( $field['id'] ) ?>]" id="delete_<?php echo esc_attr( $field['id'] ) ?>" value="1" <?php echo ( isset( $field['delete'] ) && $field['delete'] ) ? 'checked="checked"' : ''; ?> />
-			<?php _e( 'permanently delete old files when replaced or when the entry is deleted', 'formidable-pro' ) ?>
+			<?php esc_html_e( 'permanently delete old files when replaced or when the entry is deleted', 'formidable-pro' ); ?>
 		</label>
 	</td>
 </tr>
 <tr>
 	<td>
-		<label><?php _e( 'Email Attachment', 'formidable-pro' ) ?></label>
+		<label><?php esc_html_e( 'Email Attachment', 'formidable-pro' ); ?></label>
 	</td>
 	<td>
 		<label for="attach_<?php echo esc_attr( $field['id'] ) ?>">
 			<input type="checkbox" id="attach_<?php echo esc_attr( $field['id'] ) ?>" name="field_options[attach_<?php echo esc_attr( $field['id'] ) ?>]" value="1" <?php echo ( isset( $field['attach'] ) && $field['attach'] ) ? 'checked="checked"' : ''; ?> />
-			<?php _e( 'attach this file to the email notification', 'formidable-pro' ) ?>
+			<?php esc_html_e( 'attach this file to the email notification', 'formidable-pro' ); ?>
 		</label>
 	</td>
 </tr>
 
 <?php if ( $mimes ) { ?>
-	<tr><td><label><?php _e( 'Allowed file types', 'formidable-pro' ) ?></label></td>
+	<tr>
+		<td><label><?php esc_html_e( 'Allowed file types', 'formidable-pro' ); ?></label></td>
 		<td>
 			<label for="restrict_<?php echo esc_html( $field['id'] ) ?>_0">
 				<input type="radio" name="field_options[restrict_<?php echo esc_html( $field['id'] ) ?>]" id="restrict_<?php echo esc_html( $field['id'] ) ?>_0" value="0" <?php FrmAppHelper::checked( $field['restrict'], 0 ); ?> onclick="frm_show_div('restrict_box_<?php echo absint( $field['id'] ) ?>',0,1,'.')" />
-				<?php _e( 'All types', 'formidable-pro' ) ?>
+				<?php esc_html_e( 'All types', 'formidable-pro' ); ?>
 			</label> &nbsp;
 
 			<label for="restrict_<?php echo esc_html( $field['id'] ) ?>_1">
 				<input type="radio" name="field_options[restrict_<?php echo esc_html( $field['id'] ) ?>]" id="restrict_<?php echo esc_html( $field['id'] ) ?>_1" value="1" <?php FrmAppHelper::checked( $field['restrict'], 1 ); ?> onclick="frm_show_div('restrict_box_<?php echo absint( $field['id'] ) ?>',1,1,'.')" />
-				<?php _e( 'Specify allowed types', 'formidable-pro' ) ?>
+				<?php esc_html_e( 'Specify allowed types', 'formidable-pro' ); ?>
 
 				<span class="restrict_box_<?php echo absint( $field['id'] ) ?> <?php echo ( $field['restrict'] == 1 ? '' : 'frm_invisible' ) ?>">
 					<select name="field_options[ftypes_<?php echo esc_attr( $field['id'] ) ?>][]" multiple="multiple" class="frm_multiselect">
@@ -103,12 +104,33 @@
 			<span class="frm_screen_reader"><?php esc_html_e( 'Resize the image by width or height', 'formidable-pro' ); ?></span>
 			<select name="field_options[resize_dir_<?php echo esc_attr( $field['id'] ) ?>]">
 				<option value="width" <?php selected( $field['resize_dir'], 'width' ) ?>>
-					<?php echo esc_html_e( 'wide', 'formidable-pro' ); ?>
+					<?php esc_html_e( 'wide', 'formidable-pro' ); ?>
 				</option>
 				<option value="height" <?php selected( $field['resize_dir'], 'height' ) ?>>
-					<?php echo esc_html_e( 'high', 'formidable-pro' ); ?>
+					<?php esc_html_e( 'high', 'formidable-pro' ); ?>
 				</option>
 			</select>
 		</label>
+	</td>
+</tr>
+<tr>
+	<td>
+		<label for="drop_msg_<?php echo esc_attr( $field['id'] ) ?>">
+			<?php esc_html_e( 'Upload text', 'formidable-pro' ); ?>
+		</label>
+	</td>
+	<td>
+		<input type="text" id="drop_msg_<?php echo esc_attr( $field['id'] ) ?>" class="frm_long_input" name="field_options[drop_msg_<?php echo esc_attr( $field['id'] ) ?>]" value="<?php echo esc_attr( $field['drop_msg'] ); ?>" />
+	</td>
+</tr>
+<tr>
+	<td>
+		<label for="choose_msg_<?php echo esc_attr( $field['id'] ) ?>">
+			<?php esc_html_e( 'Compact upload text', 'formidable-pro' ); ?>
+			<span class="frm_help frm_icon_font frm_tooltip_icon" title="<?php echo esc_attr__( 'The label shown when the file upload field is compacted with the frm_compact CSS layout class.', 'formidable-pro' ); ?>"></span>
+		</label>
+	</td>
+	<td>
+		<input type="text" id="choose_msg_<?php echo esc_attr( $field['id'] ) ?>" class="frm_long_input" name="field_options[choose_msg_<?php echo esc_attr( $field['id'] ) ?>]" value="<?php echo esc_attr( $field['choose_msg'] ); ?>" />
 	</td>
 </tr>

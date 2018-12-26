@@ -11,7 +11,7 @@ class FrmAppHelper {
 	/**
 	 * @since 2.0
 	 */
-	public static $plug_version = '3.03';
+	public static $plug_version = '3.04.03';
 
     /**
      * @since 1.07.02
@@ -69,6 +69,23 @@ class FrmAppHelper {
 
 	public static function get_affiliate() {
 		return absint( apply_filters( 'frm_affiliate_id', 0 ) );
+	}
+
+	/**
+	 * @since 3.04.02
+	 */
+	public static function admin_upgrade_link( $medium, $page = '' ) {
+		if ( empty( $page ) ) {
+			$page = 'https://formidableforms.com/pricing-lite/';
+		} else {
+			$page = 'https://formidableforms.com/' . $page;
+		}
+		$query_args = array(
+			'utm_source'   => 'WordPress',
+			'utm_medium'   => $medium,
+			'utm_campaign' => 'liteplugin',
+		);
+		return add_query_arg( $query_args, $page );
 	}
 
     /**
@@ -266,12 +283,14 @@ class FrmAppHelper {
             }
 			self::sanitize_value( $sanitize, $value );
 		} else {
-			$value = self::get_simple_request( array(
-				'type'     => $src,
-				'param'    => $param,
-				'default'  => $default,
-				'sanitize' => $sanitize,
-			) );
+			$value = self::get_simple_request(
+				array(
+					'type'     => $src,
+					'param'    => $param,
+					'default'  => $default,
+					'sanitize' => $sanitize,
+				)
+			);
 		}
 
 		if ( isset( $params ) && is_array( $value ) && ! empty( $value ) ) {
@@ -289,12 +308,14 @@ class FrmAppHelper {
     }
 
 	public static function get_post_param( $param, $default = '', $sanitize = '' ) {
-		return self::get_simple_request( array(
-			'type'     => 'post',
-			'param'    => $param,
-			'default'  => $default,
-			'sanitize' => $sanitize,
-		) );
+		return self::get_simple_request(
+			array(
+				'type'     => 'post',
+				'param'    => $param,
+				'default'  => $default,
+				'sanitize' => $sanitize,
+			)
+		);
 	}
 
 	/**
@@ -306,12 +327,14 @@ class FrmAppHelper {
 	 * @return string|array
 	 */
 	public static function simple_get( $param, $sanitize = 'sanitize_text_field', $default = '' ) {
-		return self::get_simple_request( array(
-			'type'     => 'get',
-			'param'    => $param,
-			'default'  => $default,
-			'sanitize' => $sanitize,
-		) );
+		return self::get_simple_request(
+			array(
+				'type'     => 'get',
+				'param'    => $param,
+				'default'  => $default,
+				'sanitize' => $sanitize,
+			)
+		);
 	}
 
 	/**
@@ -387,15 +410,6 @@ class FrmAppHelper {
     }
 
 	/**
-	 * @deprecated 3.01
-	 * @codeCoverageIgnore
-	 */
-	public static function sanitize_array( &$values ) {
-		_deprecated_function( __METHOD__, '3.01', 'FrmAppHelper::sanitize_value' );
-		self::sanitize_value( 'wp_kses_post', $values );
-	}
-
-	/**
 	 * Sanitize the value, and allow some HTML
 	 * @since 2.0
 	 * @param string $value
@@ -446,6 +460,7 @@ class FrmAppHelper {
 			'abbr' => array(
 				'title' => array(),
 			),
+			'aside' => $allow_class,
 			'b' => array(),
 			'blockquote' => array(
 				'cite'  => array(),
@@ -496,6 +511,7 @@ class FrmAppHelper {
 				'cite' => array(),
 				'title' => array(),
 			),
+			'section' => $allow_class,
 			'span' => array(
 				'class' => array(),
 				'id'    => array(),
@@ -579,10 +595,13 @@ class FrmAppHelper {
 	 * @since 3.0
 	 */
 	public static function save_combined_js() {
-		$file_atts = apply_filters( 'frm_js_location', array(
-			'file_name' => 'frm.min.js',
-			'new_file_path' => FrmAppHelper::plugin_path() . '/js',
-		) );
+		$file_atts = apply_filters(
+			'frm_js_location',
+			array(
+				'file_name' => 'frm.min.js',
+				'new_file_path' => FrmAppHelper::plugin_path() . '/js',
+			)
+		);
 		$new_file = new FrmCreateFile( $file_atts );
 
 		$files = array(
@@ -606,25 +625,15 @@ class FrmAppHelper {
         return ( true === $value || 1 == $value || 'true' == $value || 'yes' == $value );
     }
 
-    /**
-     * Used to filter shortcode in text widgets
-	 *
-	 * @deprecated 2.5.4
-	 * @codeCoverageIgnore
-     */
-    public static function widget_text_filter_callback( $matches ) {
-		_deprecated_function( __METHOD__, '2.5.4' );
-        return do_shortcode( $matches[0] );
-    }
-
 	public static function get_pages() {
-		return get_posts( array(
+		$query = array(
 			'post_type'   => 'page',
 			'post_status' => array( 'publish', 'private' ),
 			'numberposts' => -1,
 			'orderby'     => 'title',
 			'order'       => 'ASC',
-		) );
+		);
+		return get_posts( $query );
 	}
 
     public static function wp_pages_dropdown( $field_name, $page_id, $truncate = false ) {
@@ -982,19 +991,27 @@ class FrmAppHelper {
 			$key = $key . 'a';
         }
 
-		$key_check = FrmDb::get_var( $table_name, array(
-			$column => $key,
-			'ID !'  => $id,
-		), $column );
+		$key_check = FrmDb::get_var(
+			$table_name,
+			array(
+				$column => $key,
+				'ID !'  => $id,
+			),
+			$column
+		);
 
 		if ( $key_check || is_numeric( $key_check ) ) {
             $suffix = 2;
 			do {
 				$alt_post_name = substr( $key, 0, 200 - ( strlen( $suffix ) + 1 ) ) . $suffix;
-				$key_check = FrmDb::get_var( $table_name, array(
-					$column => $alt_post_name,
-					'ID !'  => $id,
-				), $column );
+				$key_check = FrmDb::get_var(
+					$table_name,
+					array(
+						$column => $alt_post_name,
+						'ID !'  => $id,
+					),
+					$column
+				);
 				$suffix++;
 			} while ( $key_check || is_numeric( $key_check ) );
 			$key = $alt_post_name;
@@ -1062,12 +1079,17 @@ class FrmAppHelper {
 				if ( ! isset( $field->field_options['custom_field'] ) ) {
                     $field->field_options['custom_field'] = '';
                 }
-				$meta_value = FrmProEntryMetaHelper::get_post_value( $record->post_id, $field->field_options['post_field'], $field->field_options['custom_field'], array(
-					'truncate' => false,
-					'type' => $field->type,
-					'form_id' => $field->form_id,
-					'field' => $field,
-				) );
+				$meta_value = FrmProEntryMetaHelper::get_post_value(
+					$record->post_id,
+					$field->field_options['post_field'],
+					$field->field_options['custom_field'],
+					array(
+						'truncate' => false,
+						'type' => $field->type,
+						'form_id' => $field->form_id,
+						'field' => $field,
+					)
+				);
             } else {
 				$meta_value = FrmEntryMeta::get_meta_value( $record, $field->id );
             }
@@ -1576,13 +1598,14 @@ class FrmAppHelper {
         $version = FrmAppHelper::plugin_version();
 		wp_register_script( 'formidable_admin_global', FrmAppHelper::plugin_url() . '/js/formidable_admin_global.js', array( 'jquery' ), $version );
 
-        wp_localize_script( 'formidable_admin_global', 'frmGlobal', array(
+		$global_strings = array(
 			'updating_msg' => __( 'Please wait while your site updates.', 'formidable' ),
             'deauthorize'  => __( 'Are you sure you want to deauthorize Formidable Forms on this site?', 'formidable' ),
 			'url'          => FrmAppHelper::plugin_url(),
 			'loading'      => __( 'Loading&hellip;' ),
 			'nonce'        => wp_create_nonce( 'frm_ajax' ),
-        ) );
+		);
+		wp_localize_script( 'formidable_admin_global', 'frmGlobal', $global_strings );
 
 		if ( $load ) {
 			wp_enqueue_script( 'formidable_admin_global' );
@@ -1603,7 +1626,7 @@ class FrmAppHelper {
 		$ajax_url = admin_url( 'admin-ajax.php', is_ssl() ? 'admin' : 'http' );
 		$ajax_url = apply_filters( 'frm_ajax_url', $ajax_url );
 
-		wp_localize_script( 'formidable', 'frm_js', array(
+		$script_strings = array(
 			'ajax_url'  => $ajax_url,
 			'images_url' => self::plugin_url() . '/images',
 			'loading'   => __( 'Loading&hellip;' ),
@@ -1615,11 +1638,12 @@ class FrmAppHelper {
 			'file_spam' => __( 'That file looks like Spam.', 'formidable' ),
 			'calc_error' => __( 'There is an error in the calculation in the field with key', 'formidable' ),
 			'empty_fields' => __( 'Please complete the preceding required fields before uploading a file.', 'formidable' ),
-		) );
+		);
+		wp_localize_script( 'formidable', 'frm_js', $script_strings );
 
 		if ( $location == 'admin' ) {
 			$frm_settings = self::get_settings();
-			wp_localize_script( 'formidable_admin', 'frm_admin_js', array(
+			$admin_script_strings = array(
 				'confirm_uninstall' => __( 'Are you sure you want to do this? Clicking OK will delete all forms, form data, and all other Formidable data. There is no Undo.', 'formidable' ),
 				'desc'              => __( '(Click to add description)', 'formidable' ),
 				'blank'             => __( '(Blank)', 'formidable' ),
@@ -1655,7 +1679,11 @@ class FrmAppHelper {
 				'view_shortcodes'   => __( 'This calculation may have shortcodes that work in Views but not forms.', 'formidable' ),
 				'text_shortcodes'   => __( 'This calculation may have shortcodes that work in text calculations but not numeric calculations.', 'formidable' ),
 				'repeat_limit_min'  => __( 'Please enter a Repeat Limit that is greater than 1.', 'formidable' ),
-			) );
+				'installing'        => __( 'Installing', 'formidable' ),
+				'install'           => __( 'Install', 'formidable' ),
+				'active'            => __( 'Active', 'formidable' ),
+			);
+			wp_localize_script( 'formidable_admin', 'frm_admin_js', $admin_script_strings );
 		}
 	}
 
@@ -1762,8 +1790,24 @@ class FrmAppHelper {
     }
 
 	/**
-	 * Prepare and save settings in styles and actions
+	 * Used to filter shortcode in text widgets
 	 *
+	 * @deprecated 2.5.4
+	 * @codeCoverageIgnore
+	 */
+	public static function widget_text_filter_callback( $matches ) {
+		return FrmDeprecated::widget_text_filter_callback( $matches );
+	}
+
+	/**
+	 * @deprecated 3.01
+	 * @codeCoverageIgnore
+	 */
+	public static function sanitize_array( &$values ) {
+		FrmDeprecated::sanitize_array( $values );
+	}
+
+	/**
 	 * @param array $settings
 	 * @param string $group
 	 *
@@ -1772,29 +1816,19 @@ class FrmAppHelper {
 	 * @codeCoverageIgnore
 	 */
 	public static function save_settings( $settings, $group ) {
-		_deprecated_function( __METHOD__, '2.05.06', 'FrmDb::' . __FUNCTION__ );
-		return FrmDb::save_settings( $settings, $group );
+		return FrmDeprecated::save_settings( $settings, $group );
 	}
 
 	/**
-	 * Since actions are JSON encoded, we don't want any filters messing with it.
-	 * Remove the filters and then add them back in case any posts or views are
-	 * also being imported.
-	 *
-	 * Used when saving form actions and styles
-	 *
 	 * @since 2.0.4
 	 * @deprecated 2.05.06
 	 * @codeCoverageIgnore
 	 */
 	public static function save_json_post( $settings ) {
-		_deprecated_function( __METHOD__, '2.05.06', 'FrmDb::' . __FUNCTION__ );
-		return FrmDb::save_json_post( $settings );
+		return FrmDeprecated::save_json_post( $settings );
 	}
 
 	/**
-	 * Check cache before fetching values and saving to cache
-	 *
 	 * @since 2.0
 	 * @deprecated 2.05.06
 	 * @codeCoverageIgnore
@@ -1806,8 +1840,7 @@ class FrmAppHelper {
 	 * @return mixed $results The cache or query results
 	 */
 	public static function check_cache( $cache_key, $group = '', $query = '', $type = 'get_var', $time = 300 ) {
-		_deprecated_function( __METHOD__, '2.05.06', 'FrmDb::' . __FUNCTION__ );
-		return FrmDb::check_cache( $cache_key, $group, $query, $type, $time );
+		return FrmDeprecated::check_cache( $cache_key, $group, $query, $type, $time );
 	}
 
 	/**
@@ -1815,19 +1848,15 @@ class FrmAppHelper {
 	 * @codeCoverageIgnore
 	 */
 	public static function set_cache( $cache_key, $results, $group = '', $time = 300 ) {
-		_deprecated_function( __METHOD__, '2.05.06', 'FrmDb::' . __FUNCTION__ );
-		FrmDb::set_cache( $cache_key, $results, $group, $time );
+		return FrmDeprecated::set_cache( $cache_key, $results, $group, $time );
 	}
 
 	/**
-	 * Keep track of the keys cached in each group so they can be deleted
-	 * in Redis and Memcache
 	 * @deprecated 2.05.06
 	 * @codeCoverageIgnore
 	 */
 	public static function add_key_to_group_cache( $key, $group ) {
-		_deprecated_function( __METHOD__, '2.05.06', 'FrmDb::' . __FUNCTION__ );
-		FrmDb::add_key_to_group_cache( $key, $group );
+		FrmDeprecated::add_key_to_group_cache( $key, $group );
 	}
 
 	/**
@@ -1835,8 +1864,7 @@ class FrmAppHelper {
 	 * @codeCoverageIgnore
 	 */
 	public static function get_group_cached_keys( $group ) {
-		_deprecated_function( __METHOD__, '2.05.06', 'FrmDb::' . __FUNCTION__ );
-		return FrmDb::get_group_cached_keys( $group );
+		return FrmDeprecated::get_group_cached_keys( $group );
 	}
 
 	/**
@@ -1846,8 +1874,7 @@ class FrmAppHelper {
 	 * @return mixed The cached value or false
 	 */
 	public static function check_cache_and_transient( $cache_key ) {
-		_deprecated_function( __METHOD__, '2.05.06', 'FrmDb::' . __FUNCTION__ );
-		return FrmDb::check_cache( $cache_key );
+		return FrmDeprecated::check_cache( $cache_key );
 	}
 
 	/**
@@ -1857,8 +1884,7 @@ class FrmAppHelper {
 	 * @param string $cache_key
 	 */
 	public static function delete_cache_and_transient( $cache_key, $group = 'default' ) {
-		_deprecated_function( __METHOD__, '2.05.06', 'FrmDb::' . __FUNCTION__ );
-		FrmDb::delete_cache_and_transient( $cache_key, $group );
+		FrmDeprecated::delete_cache_and_transient( $cache_key, $group );
 	}
 
 	/**
@@ -1869,13 +1895,10 @@ class FrmAppHelper {
 	 * @param string $group The name of the cache group
 	 */
 	public static function cache_delete_group( $group ) {
-		_deprecated_function( __METHOD__, '2.05.06', 'FrmDb::' . __FUNCTION__ );
-		FrmDb::cache_delete_group( $group );
+		FrmDeprecated::cache_delete_group( $group );
 	}
 
 	/**
-	 * Added for < WP 4.0 compatability
-	 *
 	 * @since 1.07.10
 	 * @deprecated 2.05.06
 	 * @codeCoverageIgnore
@@ -1884,8 +1907,7 @@ class FrmAppHelper {
 	 * @return string The escaped value
 	 */
 	public static function esc_like( $term ) {
-		_deprecated_function( __METHOD__, '2.05.06', 'FrmDb::' . __FUNCTION__ );
-		return FrmDb::esc_like( $term );
+		return FrmDeprecated::esc_like( $term );
 	}
 
 	/**
@@ -1894,18 +1916,15 @@ class FrmAppHelper {
 	 * @codeCoverageIgnore
 	 */
 	public static function esc_order( $order_query ) {
-		_deprecated_function( __METHOD__, '2.05.06', 'FrmDb::' . __FUNCTION__ );
-		return FrmDb::esc_order( $order_query );
+		return FrmDeprecated::esc_order( $order_query );
 	}
 
 	/**
-	 * Make sure this is ordering by either ASC or DESC
 	 * @deprecated 2.05.06
 	 * @codeCoverageIgnore
 	 */
 	public static function esc_order_by( &$order_by ) {
-		_deprecated_function( __METHOD__, '2.05.06', 'FrmDb::' . __FUNCTION__ );
-		FrmDb::esc_order_by( $order_by );
+		FrmDeprecated::esc_order_by( $order_by );
 	}
 
 	/**
@@ -1914,19 +1933,16 @@ class FrmAppHelper {
 	 * @codeCoverageIgnore
 	 */
 	public static function esc_limit( $limit ) {
-		_deprecated_function( __METHOD__, '2.05.06', 'FrmDb::' . __FUNCTION__ );
-		return FrmDb::esc_limit( $limit );
+		return FrmDeprecated::esc_limit( $limit );
 	}
 
 	/**
-	 * Get an array of values ready to go through $wpdb->prepare
 	 * @since 2.0
 	 * @deprecated 2.05.06
 	 * @codeCoverageIgnore
 	 */
 	public static function prepare_array_values( $array, $type = '%s' ) {
-		_deprecated_function( __METHOD__, '2.05.06', 'FrmDb::' . __FUNCTION__ );
-		return FrmDb::prepare_array_values( $array, $type );
+		return FrmDeprecated::prepare_array_values( $array, $type );
 	}
 
 	/**
@@ -1934,7 +1950,6 @@ class FrmAppHelper {
 	 * @codeCoverageIgnore
 	 */
 	public static function prepend_and_or_where( $starts_with = ' WHERE ', $where = '' ) {
-		_deprecated_function( __METHOD__, '2.05.06', 'FrmDb::' . __FUNCTION__ );
-		return FrmDb::prepend_and_or_where( $starts_with, $where );
+		return FrmDeprecated::prepend_and_or_where( $starts_with, $where );
 	}
 }

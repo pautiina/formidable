@@ -461,6 +461,11 @@ class FrmProFieldsHelper {
 
 			//If the default value does not match any options OR if data from entries field (never would have commas in values), explode to array
 			$value = explode(',', $value);
+
+			if ( is_array( $value ) ) {
+				// spaces prevent the value from being matched
+				$value = array_map( 'trim', $value );
+			}
 		}
     }
 
@@ -1387,7 +1392,7 @@ class FrmProFieldsHelper {
         if ( ! $args['opt_key'] ) {
             $cat_atts['taxonomy'] = FrmProAppHelper::get_custom_taxonomy($post_type, $args['field']);
 			if ( ! $cat_atts['taxonomy'] ) {
-				echo '<p>' . __( 'No Categories', 'formidable-pro' ) . '</p>';
+				echo '<p>' . esc_html__( 'No Categories', 'formidable-pro' ) . '</p>';
                 return;
             }
 
@@ -2490,7 +2495,7 @@ class FrmProFieldsHelper {
 
 	public static function get_single_date( $date, $date_format ) {
 		if ( preg_match( '/^\d{1-2}\/\d{1-2}\/\d{4}$/', $date ) ) {
-            $frmpro_settings = new FrmProSettings();
+			$frmpro_settings = FrmProAppHelper::get_settings();
             $date = FrmProAppHelper::convert_date($date, $frmpro_settings->date_format, 'Y-m-d');
         }
 
@@ -2516,6 +2521,9 @@ class FrmProFieldsHelper {
 		return $value;
 	}
 
+	/**
+	 * @codeCoverageIgnore
+	 */
     public static function get_display_name( $user_id, $user_info = 'display_name', $args = array() ) {
 		_deprecated_function( __FUNCTION__, '3.0', 'FrmFieldsHelper::get_user_display_name' );
 		return FrmFieldsHelper::get_user_display_name( $user_id, $user_info, $args );
@@ -2578,16 +2586,16 @@ class FrmProFieldsHelper {
         $linked_forms = array();
         ?>
         <select class="frm_shortcode_select frm_insert_val" data-target="<?php echo esc_attr( $target_id ) ?>">
-            <option value="">&mdash; <?php _e( 'Select a value to insert into the box below', 'formidable-pro' ) ?> &mdash;</option>
+			<option value="">&mdash; <?php esc_html_e( 'Select a value to insert into the box below', 'formidable-pro' ); ?> &mdash;</option>
             <?php if ( $type != 'field_opt' && $type != 'calc' ) { ?>
-            <option value="id"><?php _e( 'Entry ID', 'formidable-pro' ) ?></option>
-            <option value="key"><?php _e( 'Entry Key', 'formidable-pro' ) ?></option>
-            <option value="post_id"><?php _e( 'Post ID', 'formidable-pro' ) ?></option>
-            <option value="ip"><?php _e( 'User IP', 'formidable-pro' ) ?></option>
-            <option value="created-at"><?php _e( 'Entry creation date', 'formidable-pro' ) ?></option>
-            <option value="updated-at"><?php _e( 'Entry update date', 'formidable-pro' ) ?></option>
+				<option value="id"><?php esc_html_e( 'Entry ID', 'formidable-pro' ); ?></option>
+				<option value="key"><?php esc_html_e( 'Entry Key', 'formidable-pro' ); ?></option>
+				<option value="post_id"><?php esc_html_e( 'Post ID', 'formidable-pro' ); ?></option>
+				<option value="ip"><?php esc_html_e( 'User IP', 'formidable-pro' ); ?></option>
+				<option value="created-at"><?php esc_html_e( 'Entry creation date', 'formidable-pro' ); ?></option>
+				<option value="updated-at"><?php esc_html_e( 'Entry update date', 'formidable-pro' ); ?></option>
 
-			<optgroup label="<?php esc_attr_e( 'Form Fields', 'formidable-pro' ) ?>">
+				<optgroup label="<?php esc_attr_e( 'Form Fields', 'formidable-pro' ); ?>">
 			<?php
             }
 
@@ -2603,12 +2611,20 @@ class FrmProFieldsHelper {
 
             ?>
 				<option value="<?php echo esc_attr( $field->id ) ?>"><?php echo esc_html( $field_name = FrmAppHelper::truncate( $field->name, 60 ) ); ?> (<?php esc_html_e( 'ID', 'formidable-pro' ); ?>)</option>
-                <option value="<?php echo esc_attr( $field->field_key ) ?>"><?php echo esc_html( $field_name ) ?> (<?php _e( 'Key', 'formidable-pro' ) ?>)</option>
+				<option value="<?php echo esc_attr( $field->field_key ) ?>"><?php echo esc_html( $field_name ) ?> (<?php esc_html_e( 'Key', 'formidable-pro' ); ?>)</option>
                 <?php if ( $field->type == 'file' && $type != 'field_opt' && $type != 'calc' ) { ?>
-                    <option class="frm_subopt" value="<?php echo esc_attr( $field->field_key ) ?> size=thumbnail"><?php _e( 'Thumbnail', 'formidable-pro' ) ?></option>
-                    <option class="frm_subopt" value="<?php echo esc_attr( $field->field_key ) ?> size=medium"><?php _e( 'Medium', 'formidable-pro' ) ?></option>
-                    <option class="frm_subopt" value="<?php echo esc_attr( $field->field_key ) ?> size=large"><?php _e( 'Large', 'formidable-pro' ) ?></option>
-                    <option class="frm_subopt" value="<?php echo esc_attr( $field->field_key ) ?> size=full"><?php _e( 'Full Size', 'formidable-pro' ) ?></option>
+					<option class="frm_subopt" value="<?php echo esc_attr( $field->field_key ) ?> size=thumbnail">
+						<?php esc_html_e( 'Thumbnail', 'formidable-pro' ); ?>
+					</option>
+					<option class="frm_subopt" value="<?php echo esc_attr( $field->field_key ) ?> size=medium">
+						<?php esc_html_e( 'Medium', 'formidable-pro' ); ?>
+					</option>
+					<option class="frm_subopt" value="<?php echo esc_attr( $field->field_key ) ?> size=large">
+						<?php esc_html_e( 'Large', 'formidable-pro' ); ?>
+					</option>
+					<option class="frm_subopt" value="<?php echo esc_attr( $field->field_key ) ?> size=full">
+						<?php esc_html_e( 'Full Size', 'formidable-pro' ); ?>
+					</option>
 				<?php
                 } else if ( $field->type == 'data' && $type != 'calc' ) {
 					//get all fields from linked form
@@ -2634,20 +2650,26 @@ class FrmProFieldsHelper {
             ?>
             </optgroup>
 			<optgroup label="<?php esc_attr_e( 'Helpers', 'formidable-pro' ) ?>">
-                <option value="editlink"><?php _e( 'Admin link to edit the entry', 'formidable-pro' ) ?></option>
+				<option value="editlink"><?php esc_html_e( 'Admin link to edit the entry', 'formidable-pro' ); ?></option>
                 <?php if ( $target_id == 'content' ) { ?>
-                <option value="detaillink"><?php _e( 'Link to view single page if showing dynamic entries', 'formidable-pro' ) ?></option>
+				<option value="detaillink">
+					<?php esc_html_e( 'Link to view single page if showing dynamic entries', 'formidable-pro' ); ?>
+				</option>
 				<?php
                 }
 
 				if ( $type != 'email' ) {
                 ?>
-                <option value="evenodd"><?php _e( 'Add a rotating \'even\' or \'odd\' class', 'formidable-pro' ) ?></option>
+				<option value="evenodd">
+					<?php esc_html_e( 'Add a rotating \'even\' or \'odd\' class', 'formidable-pro' ); ?>
+				</option>
                 <?php } else if ( $target_id == 'email_message' ) { ?>
-                <option value="default-message"><?php _e( 'Default Email Message', 'formidable-pro' ) ?></option>
+				<option value="default-message">
+					<?php esc_html_e( 'Default Email Message', 'formidable-pro' ); ?>
+				</option>
                 <?php } ?>
-                <option value="siteurl"><?php _e( 'Site URL', 'formidable-pro' ) ?></option>
-                <option value="sitename"><?php _e( 'Site Name', 'formidable-pro' ) ?></option>
+                <option value="siteurl"><?php esc_html_e( 'Site URL', 'formidable-pro' ); ?></option>
+                <option value="sitename"><?php esc_html_e( 'Site Name', 'formidable-pro' ); ?></option>
             </optgroup>
             <?php } ?>
         </select>
@@ -3321,12 +3343,14 @@ class FrmProFieldsHelper {
 	}
 
 	/**
-	* Get the hidden inputs for a Dynamic field when it has no options to show or when it is readonly
-	*
-	* @since 2.0.16
-	* @param array $field
-	* @param string $disabled
-	*/
+	 * Get the hidden inputs for a Dynamic field when it has no options to show or when it is readonly
+	 *
+	 * @since 2.0.16
+	 * @codeCoverageIgnore
+	 *
+	 * @param array $field
+	 * @param string $disabled
+	 */
 	public static function maybe_get_hidden_dynamic_field_inputs( $field, $args ) {
 		_deprecated_function( __FUNCTION__, '3.0', 'FrmFieldType::maybe_include_hidden_values' );
 		if ( ! in_array( $field['data_type'], array( 'select', 'radio', 'checkbox' ) ) ) {
@@ -3379,6 +3403,7 @@ class FrmProFieldsHelper {
 	/**
 	 * @since 2.0
 	 * @deprecated 3.0
+	 * @codeCoverageIgnore
 	 *
 	 * @param array $field
 	 * @return boolean true if field type is radio or Dynamic radio
@@ -3391,6 +3416,7 @@ class FrmProFieldsHelper {
 	/**
 	 * @since 2.0
 	 * @deprecated 3.0
+	 * @codeCoverageIgnore
 	 *
 	 * @param array $field
 	 * @return boolean true if field type is checkbox or Dynamic checkbox
@@ -3400,16 +3426,28 @@ class FrmProFieldsHelper {
 		return FrmField::is_checkbox( $field );
 	}
 
+	/**
+	 * @deprecated 3.0
+	 * @codeCoverageIgnore
+	 */
 	public static function setup_input_masks( $field ) {
 		_deprecated_function( __FUNCTION__, '3.0', 'FrmProFieldsController::setup_input_masks' );
 		return FrmProFieldsController::setup_input_masks( $field );
 	}
 
+	/**
+	 * @deprecated 3.0
+	 * @codeCoverageIgnore
+	 */
 	public static function setup_input_mask( $format ) {
 		_deprecated_function( __FUNCTION__, '3.0', 'FrmProFieldsController::setup_input_mask' );
 		return FrmProFieldsController::setup_input_mask( $format );
 	}
 
+	/**
+	 * @deprecated 3.0
+	 * @codeCoverageIgnore
+	 */
 	public static function get_default_html( $default_html, $type ) {
 		_deprecated_function( __FUNCTION__, '3.0', 'FrmFieldType::input_html' );
 		return $default_html;
@@ -3419,6 +3457,8 @@ class FrmProFieldsHelper {
 	 * Get HTML for a file upload field depending on atts and file type
 	 *
 	 * @since 2.0.19
+	 * @deprecated 3.0
+	 * @codeCoverageIgnore
 	 *
 	 * @param array $ids
 	 * @param string $size
@@ -3431,6 +3471,10 @@ class FrmProFieldsHelper {
 		return $field_obj->get_displayed_file_html( $ids, $size, $atts );
 	}
 
+	/**
+	 * @deprecated 3.0
+	 * @codeCoverageIgnore
+	 */
 	public static function get_display_value( $value, $field, $atts = array() ) {
 		_deprecated_function( __FUNCTION__, '3.0', 'FrmFieldsHelper::get_unfiltered_display_value' );
 		if ( is_array( $field ) ) {
@@ -3439,6 +3483,10 @@ class FrmProFieldsHelper {
 		return FrmFieldsHelper::get_unfiltered_display_value( compact( 'value', 'field', 'atts' ) );
 	}
 
+	/**
+	 * @deprecated 3.0
+	 * @codeCoverageIgnore
+	 */
 	public static function get_user_id_display_value( $value, $atts, $field = array() ) {
 		_deprecated_function( __FUNCTION__, '3.0', 'FrmFieldsHelper::get_unfiltered_display_value' );
 		if ( is_array( $field ) ) {
@@ -3451,6 +3499,8 @@ class FrmProFieldsHelper {
 	 * Get a JSON array of values from Repeating Section
 	 *
 	 * @since 2.03.08
+	 * @deprecated 3.0
+	 * @codeCoverageIgnore
 	 *
 	 * @param $value
 	 * @param $atts
@@ -3463,78 +3513,138 @@ class FrmProFieldsHelper {
 		return FrmFieldsHelper::get_unfiltered_display_value( compact( 'value', 'field', 'atts' ) );
 	}
 
+	/**
+	 * @deprecated 2.03.01
+	 * @codeCoverageIgnore
+	 */
 	public static function get_time_options( $values ) {
 		_deprecated_function( __FUNCTION__, '2.03.01', 'FrmFieldType::get_options' );
 		return FrmProTimeField::get_time_options( $values );
 	}
 
+	/**
+	 * @deprecated 2.03.01
+	 * @codeCoverageIgnore
+	 */
 	public static function show_time_field( $field, $values ) {
 		_deprecated_function( __FUNCTION__, '2.03.01', 'FrmFieldType::include_front_field_input' );
 		FrmProTimeField::show_time_field( $field, $values );
 	}
 
+	/**
+	 * @deprecated 2.03.01
+	 * @codeCoverageIgnore
+	 */
 	public static function time_array_to_string( &$value ) {
 		_deprecated_function( __FUNCTION__, '2.03.01', 'FrmFieldType::time_array_to_string' );
 		FrmProTimeField::time_array_to_string( $value );
 	}
 
+	/**
+	 * @deprecated 2.03.01
+	 * @codeCoverageIgnore
+	 */
 	public static function is_time_empty( $value ) {
 		_deprecated_function( __FUNCTION__, '2.03.01', 'FrmFieldType::is_time_empty' );
 		return FrmProTimeField::is_time_empty( $value );
 	}
 
+	/**
+	 * @deprecated 3.0
+	 * @codeCoverageIgnore
+	 */
 	public static function get_time_display_value( $value, $atts, $field ) {
 		_deprecated_function( __FUNCTION__, '3.0', 'FrmFieldsHelper::get_unfiltered_display_value' );
 		return FrmFieldsHelper::get_unfiltered_display_value( compact('value', 'field', 'atts' ) );
 	}
 
+	/**
+	 * @deprecated 3.0
+	 * @codeCoverageIgnore
+	 */
 	public static function get_date_display_value( $replace_with, $atts ) {
 		_deprecated_function( __FUNCTION__, '3.0', 'FrmFieldsHelper::get_unfiltered_display_value' );
 		return FrmFieldsHelper::get_unfiltered_display_value( compact( 'value', 'field', 'atts' ) );
 	}
 
+	/**
+	 * @deprecated 3.0
+	 * @codeCoverageIgnore
+	 */
 	public static function get_file_display_value( $value, $atts, $field ) {
 		_deprecated_function( __FUNCTION__, '3.0', 'FrmFieldsHelper::get_unfiltered_display_value' );
 		return FrmFieldsHelper::get_unfiltered_display_value( compact( 'value', 'field', 'atts' ) );
 	}
 
+	/**
+	 * @deprecated 3.0
+	 * @codeCoverageIgnore
+	 */
 	public static function get_image_display_value( $value, $atts, $field ) {
 		_deprecated_function( __FUNCTION__, '3.0', 'FrmFieldsHelper::get_unfiltered_display_value' );
 		return FrmFieldsHelper::get_unfiltered_display_value( compact( 'value', 'field', 'atts' ) );
 	}
 
+	/**
+	 * @deprecated 3.0
+	 * @codeCoverageIgnore
+	 */
 	public static function get_number_display_value( $value, $atts, $field ) {
 		_deprecated_function( __FUNCTION__, '3.0', 'FrmFieldsHelper::get_unfiltered_display_value' );
 		return FrmFieldsHelper::get_unfiltered_display_value( compact( 'value', 'field', 'atts' ) );
 	}
 
+	/**
+	 * @deprecated 3.0
+	 * @codeCoverageIgnore
+	 */
 	public static function get_data_display_value( $value, $atts, $field ) {
 		_deprecated_function( __FUNCTION__, '3.0', 'FrmFieldsHelper::get_unfiltered_display_value' );
 		return FrmFieldsHelper::get_unfiltered_display_value( compact( 'value', 'field', 'atts' ) );
 	}
 
+	/**
+	 * @deprecated 3.0
+	 * @codeCoverageIgnore
+	 */
 	public static function setup_new_field_vars( $values ) {
 		_deprecated_function( __METHOD__, '3.0', 'FrmFieldsHelper::get_default_field_options_from_field' );
 
 		return $values;
 	}
 
+	/**
+	 * @deprecated 3.0
+	 * @codeCoverageIgnore
+	 */
 	public static function get_user_options() {
 		_deprecated_function( __METHOD__, '3.0', 'FrmFieldUserId::get_options' );
 		$field_obj = FrmFieldFactory::get_field_type( 'user_id' );
 		return $field_obj->get_options( array() );
 	}
 
+	/**
+	 * @deprecated 2.02.05
+	 * @codeCoverageIgnore
+	 */
 	public static function get_field_matches() {
 		_deprecated_function( __FUNCTION__, '2.02.05', 'FrmProStatisticsController::stats_shortcode' );
 		return '';
 	}
 
+	/**
+	 * @deprecated 2.0
+	 * @codeCoverageIgnore
+	 */
 	public static function value_meets_condition( $observed_value, $cond, $hide_opt ) {
 		_deprecated_function( __FUNCTION__, '2.0', 'FrmFieldsHelper::value_meets_condition' );
 		return FrmFieldsHelper::value_meets_condition($observed_value, $cond, $hide_opt);
 	}
 
+	/**
+	 * @deprecated 2.02.05
+	 * @codeCoverageIgnore
+	 */
 	public static function get_field_stats( $id, $type = 'total', $user_id = false, $value = false, $round = 100, $limit = '', $atts = array(), $drafts = false ) {
 		_deprecated_function( __FUNCTION__, '2.02.05', 'FrmProStatisticsController::stats_shortcode' );
 		$pass_atts = array(
@@ -3558,131 +3668,235 @@ class FrmProFieldsHelper {
 		return FrmProStatisticsController::stats_shortcode( $pass_atts );
 	}
 
+	/**
+	 * @deprecated 2.02.06
+	 * @codeCoverageIgnore
+	 */
 	public static function load_hidden_sub_field_javascript( $field ) {
 		_deprecated_function( __FUNCTION__, '2.02.06', 'FrmProNestedFormsController::load_hidden_sub_field_javascript' );
 		FrmProNestedFormsController::load_hidden_sub_field_javascript( $field );
 	}
 
+	/**
+	 * @deprecated 2.02.08
+	 * @codeCoverageIgnore
+	 */
 	public static function check_conditional_shortcode( &$content, $replace_with, $atts, $tag, $condition = 'if', $args = array() ) {
 		_deprecated_function( __FUNCTION__, '2.02.08', 'FrmProContent::' . __FUNCTION__ );
 		FrmProContent::check_conditional_shortcode( $content, $replace_with, $atts, $tag, $condition, $args );
 	}
 
+	/**
+	 * @deprecated 2.02.08
+	 * @codeCoverageIgnore
+	 */
 	public static function foreach_shortcode( $replace_with, $args, &$repeat_content ) {
 		_deprecated_function( __FUNCTION__, '2.02.08', 'FrmProContent::' . __FUNCTION__ );
 		FrmProContent::foreach_shortcode( $replace_with, $args, $repeat_content );
 	}
 
+	/**
+	 * @deprecated 2.02.08
+	 * @codeCoverageIgnore
+	 */
 	public static function conditional_replace_with_value( $replace_with, $atts, $field, $tag ) {
 		_deprecated_function( __FUNCTION__, '2.02.08', 'FrmProContent::' . __FUNCTION__ );
 		return FrmProContent::conditional_replace_with_value( $replace_with, $atts, $field, $tag );
 	}
 
+	/**
+	 * @deprecated 2.02.08
+	 * @codeCoverageIgnore
+	 */
 	public static function trigger_shortcode_atts( $atts, $display, $args, &$replace_with ) {
 		_deprecated_function( __FUNCTION__, '2.02.08', 'FrmProContent::' . __FUNCTION__ );
 		FrmProContent::trigger_shortcode_atts( $atts, $display, $args, $replace_with );
 	}
 
+	/**
+	 * @deprecated 2.02.08
+	 * @codeCoverageIgnore
+	 */
 	public static function atts_sanitize( $replace_with ) {
 		_deprecated_function( __FUNCTION__, '2.02.08', 'FrmProContent::' . __FUNCTION__ );
 		return FrmProContent::atts_sanitize( $replace_with );
 	}
 
+	/**
+	 * @deprecated 2.02.08
+	 * @codeCoverageIgnore
+	 */
 	public static function atts_sanitize_url( $replace_with ) {
 		_deprecated_function( __FUNCTION__, '2.02.08', 'FrmProContent::' . __FUNCTION__ );
 		return FrmProContent::atts_sanitize_url( $replace_with );
 	}
 
+	/**
+	 * @deprecated 2.02.08
+	 * @codeCoverageIgnore
+	 */
 	public static function atts_truncate( $replace_with, $atts, $display, $args ) {
 		_deprecated_function( __FUNCTION__, '2.02.08', 'FrmProContent::' . __FUNCTION__ );
 		return FrmProContent::atts_truncate( $replace_with, $atts, $display, $args );
 	}
 
+	/**
+	 * @deprecated 2.02.08
+	 * @codeCoverageIgnore
+	 */
 	public static function atts_clickable( $replace_with ) {
 		_deprecated_function( __FUNCTION__, '2.02.08', 'FrmProContent::' . __FUNCTION__ );
 		return FrmProContent::atts_clickable( $replace_with );
 	}
 
+	/**
+	 * @deprecated 2.02.08
+	 * @codeCoverageIgnore
+	 */
 	public static function replace_shortcodes( $content, $entry, $shortcodes, $display = false, $show = 'one', $odd = '', $args = array() ) {
 		_deprecated_function( __FUNCTION__, '2.02.08', 'FrmProContent::' . __FUNCTION__ );
 		return FrmProContent::replace_shortcodes( $content, $entry, $shortcodes, $display, $show, $odd, $args );
 	}
 
+	/**
+	 * @deprecated 2.02.08
+	 * @codeCoverageIgnore
+	 */
 	public static function replace_single_shortcode( $shortcodes, $short_key, $tag, $entry, $display, $args, &$content ) {
 		_deprecated_function( __FUNCTION__, '2.02.08', 'FrmProContent::' . __FUNCTION__ );
 		FrmProContent::replace_single_shortcode( $shortcodes, $short_key, $tag, $entry, $display, $args, $content );
 	}
 
+	/**
+	 * @deprecated 2.02.08
+	 * @codeCoverageIgnore
+	 */
 	public static function replace_calendar_date_shortcode( $content, $date ) {
 		_deprecated_function( __FUNCTION__, '2.02.08', 'FrmProContent::' . __FUNCTION__ );
 		return FrmProContent::replace_calendar_date_shortcode( $content, $date );
 	}
 
+	/**
+	 * @deprecated 2.02.08
+	 * @codeCoverageIgnore
+	 */
 	public static function do_shortcode_event_date( &$content, $atts, $shortcodes, $short_key, $args ) {
 		_deprecated_function( __FUNCTION__, '2.02.08', 'FrmProContent::' . __FUNCTION__ );
 		FrmProContent::do_shortcode_event_date( $content, $atts, $shortcodes, $short_key, $args );
 	}
 
+	/**
+	 * @deprecated 2.02.08
+	 * @codeCoverageIgnore
+	 */
 	public static function do_shortcode_entry_count( &$content, $atts, $shortcodes, $short_key, $args ) {
 		_deprecated_function( __FUNCTION__, '2.02.08', 'FrmProContent::' . __FUNCTION__ );
 		FrmProContent::do_shortcode_entry_count( $content, $atts, $shortcodes, $short_key, $args );
 	}
 
+	/**
+	 * @deprecated 2.02.08
+	 * @codeCoverageIgnore
+	 */
 	public static function do_shortcode_detaillink( &$content, $atts, $shortcodes, $short_key, $args, $display ) {
 		_deprecated_function( __FUNCTION__, '2.02.08', 'FrmProContent::' . __FUNCTION__ );
 		FrmProContent::do_shortcode_detaillink( $content, $atts, $shortcodes, $short_key, $args, $display );
 	}
 
+	/**
+	 * @deprecated 2.02.08
+	 * @codeCoverageIgnore
+	 */
 	public static function do_shortcode_editlink( &$content, $atts, $shortcodes, $short_key, $args ) {
 		_deprecated_function( __FUNCTION__, '2.02.08', 'FrmProContent::' . __FUNCTION__ );
 		FrmProContent::do_shortcode_editlink( $content, $atts, $shortcodes, $short_key, $args );
 	}
 
+	/**
+	 * @deprecated 2.02.08
+	 * @codeCoverageIgnore
+	 */
 	public static function do_shortcode_deletelink( &$content, $atts, $shortcodes, $short_key, $args ) {
 		_deprecated_function( __FUNCTION__, '2.02.08', 'FrmProContent::' . __FUNCTION__ );
 		FrmProContent::do_shortcode_deletelink( $content, $atts, $shortcodes, $short_key, $args );
 	}
 
+	/**
+	 * @deprecated 2.02.08
+	 * @codeCoverageIgnore
+	 */
 	public static function do_shortcode_evenodd( &$content, $atts, $shortcodes, $short_key, $args ) {
 		_deprecated_function( __FUNCTION__, '2.02.08', 'FrmProContent::' . __FUNCTION__ );
 		FrmProContent::do_shortcode_evenodd( $content, $atts, $shortcodes, $short_key, $args );
 	}
 
+	/**
+	 * @deprecated 2.02.08
+	 * @codeCoverageIgnore
+	 */
 	public static function do_shortcode_post_id( &$content, $atts, $shortcodes, $short_key, $args ) {
 		_deprecated_function( __FUNCTION__, '2.02.08', 'FrmProContent::' . __FUNCTION__ );
 		FrmProContent::do_shortcode_post_id( $content, $atts, $shortcodes, $short_key, $args );
 	}
 
+	/**
+	 * @deprecated 2.02.08
+	 * @codeCoverageIgnore
+	 */
 	public static function do_shortcode_parent_id( &$content, $atts, $shortcodes, $short_key, $args ) {
 		_deprecated_function( __FUNCTION__, '2.02.08', 'FrmProContent::' . __FUNCTION__ );
 		FrmProContent::do_shortcode_parent_id( $content, $atts, $shortcodes, $short_key, $args );
 	}
 
+	/**
+	 * @deprecated 2.02.08
+	 * @codeCoverageIgnore
+	 */
 	public static function do_shortcode_id( &$content, $atts, $shortcodes, $short_key, $args ) {
 		_deprecated_function( __FUNCTION__, '2.02.08', 'FrmProContent::' . __FUNCTION__ );
 		FrmProContent::do_shortcode_id( $content, $atts, $shortcodes, $short_key, $args );
 	}
 
+	/**
+	 * @deprecated 2.02.08
+	 * @codeCoverageIgnore
+	 */
 	public static function do_shortcode_created_at( &$content, $atts, $shortcodes, $short_key, $args ) {
 		_deprecated_function( __FUNCTION__, '2.02.08', 'FrmProContent::' . __FUNCTION__ );
 		FrmProContent::do_shortcode_created_at( $content, $atts, $shortcodes, $short_key, $args );
 	}
 
+	/**
+	 * @deprecated 2.02.08
+	 * @codeCoverageIgnore
+	 */
 	public static function do_shortcode_updated_at( &$content, $atts, $shortcodes, $short_key, $args ) {
 		_deprecated_function( __FUNCTION__, '2.02.08', 'FrmProContent::' . __FUNCTION__ );
 		FrmProContent::do_shortcode_updated_at( $content, $atts, $shortcodes, $short_key, $args );
 	}
 
+	/**
+	 * @deprecated 2.02.08
+	 * @codeCoverageIgnore
+	 */
 	public static function do_shortcode_created_by( &$content, $atts, $shortcodes, $short_key, $args ) {
 		_deprecated_function( __FUNCTION__, '2.02.08', 'FrmProContent::' . __FUNCTION__ );
 		FrmProContent::do_shortcode_created_by( $content, $atts, $shortcodes, $short_key, $args );
 	}
 
+	/**
+	 * @deprecated 2.02.08
+	 * @codeCoverageIgnore
+	 */
 	public static function do_shortcode_updated_by( &$content, $atts, $shortcodes, $short_key, $args ) {
 		_deprecated_function( __FUNCTION__, '2.02.08', 'FrmProContent::' . __FUNCTION__ );
 		FrmProContent::do_shortcode_updated_by( $content, $atts, $shortcodes, $short_key, $args );
 	}
 
+	/**
+	 * @deprecated 2.02.08
+	 * @codeCoverageIgnore
+	 */
 	public static function do_shortcode_is_draft( &$content, $atts, $shortcodes, $short_key, $args ) {
 		_deprecated_function( __FUNCTION__, '2.02.08', 'FrmProContent::' . __FUNCTION__ );
 		FrmProContent::do_shortcode_is_draft( $content, $atts, $shortcodes, $short_key, $args );

@@ -138,8 +138,6 @@ function frmFrontFormJS(){
 						errors = checkNumberField( field, errors );
 					} else if ( field.type === 'email' ) {
 						errors = checkEmailField( field, errors, emailFields );
-					} else if (field.type === 'password') {
-						errors = checkPasswordField(field, errors);
 					} else if ( field.pattern !== null ) {
 						errors = checkPatternField( field, errors );
 					}
@@ -153,8 +151,19 @@ function frmFrontFormJS(){
 	}
 
 	function maybeValidateChange( field_id, field ) {
+		if ( field.type === 'url' ) {
+			maybeAddHttpToUrl( field );
+		}
 		if ( jQuery(field).closest('form').hasClass('frm_js_validate') ) {
 			validateField( field_id, field );
+		}
+	}
+
+	function maybeAddHttpToUrl( field ) {
+		var url = field.value;
+		var matches = url.match( /^(https?|ftps?|mailto|news|feed|telnet):/ );
+		if ( field.value !== '' && matches === null ) {
+			field.value = 'http://' + url;
 		}
 	}
 
@@ -172,8 +181,6 @@ function frmFrontFormJS(){
 				errors = checkEmailField( field, errors, emailFields );
 			} else if ( field.type === 'number' ) {
 				errors = checkNumberField( field, errors );
-			} else if (field.type === 'password') {
-				errors = checkPasswordField( field, errors );
 			} else if ( field.pattern !== null ) {
 				errors = checkPatternField( field, errors );
 			}
@@ -322,25 +329,6 @@ function frmFrontFormJS(){
 				}
 			}
 		}
-		return errors;
-	}
-
-	function checkPasswordField( field, errors ) {
-		var classes = field.className;
-
-		if (classes.indexOf('frm_strong_pass') < 0) {
-			return errors;
-		}
-
-		var text = field.value;
-		var regEx = /^(?=.*?[a-z])(?=.*?[A-Z])(?=.*[^a-zA-Z0-9])(?=.*?[0-9]).{8,}$/;
-		var matches = regEx.test(text); //true if matches format, false otherwise
-
-		if (!matches) {
-			var fieldID = getFieldId( field, true );
-			errors[ fieldID ] = getFieldValidationMessage( field, 'data-invmsg' );
-		}
-
 		return errors;
 	}
 
@@ -876,19 +864,20 @@ function frmFrontFormJS(){
 				}
 			}
 
-			if ( jQuery('body').hasClass('wp-admin') ) {
+			if ( jQuery('body').hasClass('wp-admin') && jQuery(object).closest('.frmapi-form').length < 1 ) {
 				return;
 			}
 
 			e.preventDefault();
 
 			if ( typeof frmProForm !== 'undefined' && typeof frmProForm.submitAllowed === 'function' ) {
-				if ( ! frmProForm.submitAllowed( object) ) {
+				if ( ! frmProForm.submitAllowed( object ) ) {
 					return;
 				}
 			}
 
 			if ( invisibleRecaptcha.length ) {
+				showSubmitLoading( jQuery(object) );
 				executeInvisibleRecaptcha( invisibleRecaptcha );
 			} else {
 

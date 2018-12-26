@@ -45,7 +45,7 @@ class FrmProFileField {
 				'cancel'           => __( 'Cancel upload', 'formidable-pro' ),
 				'cancelConfirm'    => __( 'Are you sure you want to cancel this upload?', 'formidable-pro' ),
 				'remove'           => __( 'Remove file', 'formidable-pro' ),
-				'maxFilesExceeded' => sprintf( __( 'You have uploaded too many files. You may only include %d file(s).', 'formidable-pro' ), $max ),
+				'maxFilesExceeded' => sprintf( __( 'You have uploaded more than %d file(s).', 'formidable-pro' ), $max ),
 				'resizeHeight'     => null,
 				'resizeWidth'      => null,
 				'timeout'          => self::get_timeout(),
@@ -103,25 +103,25 @@ class FrmProFileField {
 	}
 
 	private static function get_mock_file( $media_id ) {
-		$file = array();
+		$file_url = wp_get_attachment_url( $media_id );
+		$url      = wp_get_attachment_thumb_url( $media_id );
+		if ( ! $url ) {
+			$url = wp_get_attachment_image_src( $media_id, 'thumbnail', true );
+			if ( $url ) {
+				$url = reset( $url );
+			}
+		}
+
+		$file = array(
+			'name'     => basename( $file_url ),
+			'url'      => $url,
+			'id'       => $media_id,
+			'file_url' => $file_url,
+		);
+
 		$image = get_attached_file( $media_id );
 		if ( file_exists( $image ) ) {
-			$file_url = wp_get_attachment_url( $media_id );
-			$url = wp_get_attachment_thumb_url( $media_id );
-			if ( ! $url ) {
-				$url = wp_get_attachment_image_src( $media_id, 'thumbnail', true );
-				if ( $url ) {
-					$url = reset( $url );
-				}
-			}
-			$label = basename( $image );
-			$size = filesize( $image );
-
-			$file = array(
-				'name' => $label, 'size' => $size,
-				'url' => $url, 'id' => $media_id,
-				'file_url' => $file_url,
-			);
+			$file['size'] = filesize( $image );
 		}
 
 		return $file;
@@ -151,17 +151,48 @@ class FrmProFileField {
 
 		if ( ! is_array( $meta_query ) ) {
 			$meta_query = array();
+		} else {
+			$continue = self::nest_attachment_query( $meta_query );
+			if ( ! $continue ) {
+				return;
+			}
 		}
 
 		$meta_query[] = array(
-			'key'     => '_frm_temporary',
-			'compare' => 'NOT EXISTS',
+			'relation' => 'AND',
+			array(
+				'key'     => '_frm_temporary',
+				'compare' => 'NOT EXISTS',
+			),
+			array(
+				'key'     => '_frm_file',
+				'compare' => $show ? 'EXISTS' : 'NOT EXISTS',
+			),
 		);
+	}
 
-		$meta_query[] = array(
-			'key'     => '_frm_file',
-			'compare' => $show ? 'EXISTS' : 'NOT EXISTS',
-		);
+	/**
+	 * If a query uses OR, adding to it will return unexpected results
+	 * Move the OR query into a subquery
+	 * @return boolean true to continue adding the extra query
+	 */
+	private static function nest_attachment_query( &$meta_query ) {
+		if ( ! isset( $meta_query['relation'] ) || 'or' !== strtolower( $meta_query['relation'] ) ) {
+			return true;
+		}
+
+		$temp_group = array();
+		foreach ( $meta_query as $k => $meta ) {
+			// if looking for a Formidable file, don't exclude it
+			if ( isset( $meta['value'] ) && strpos( $meta['value'], 'formidable' ) !== false ) {
+				return false;
+			}
+			$temp_group[] = $meta;
+			unset( $meta_query[ $k ] );
+		}
+		$meta_query[] = $temp_group;
+
+		return true;
 	}
 
 	public static function filter_api_attachments( $args ) {
@@ -366,7 +397,7 @@ class FrmProFileField {
 
 		$total_upload_count = self::get_new_and_old_file_count( $field, $args, $values );
 		if ( $total_upload_count > $file_count_limit ) {
-			$errors[ 'field' . $field->temp_id ] = sprintf( __( 'You have uploaded too many files. You may only include %d file(s).', 'formidable-pro' ), $file_count_limit );
+			$errors[ 'field' . $field->temp_id ] = sprintf( __( 'You have uploaded more than %d file(s).', 'formidable-pro' ), $file_count_limit );
 		}
 	}
 

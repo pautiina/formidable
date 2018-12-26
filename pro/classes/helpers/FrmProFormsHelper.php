@@ -156,8 +156,8 @@ class FrmProFormsHelper {
 			} else if ( $date_field_id ) {
 				?>
 jQuery(document).ready(function($){
-$('<?php echo $trigger_id ?>').addClass('frm_custom_date');
-$(document).on('focusin','<?php echo $trigger_id ?>', function(){
+$('<?php echo $trigger_id; ?>').addClass('frm_custom_date');
+$(document).on('focusin','<?php echo $trigger_id; ?>', function(){
 $.datepicker.setDefaults($.datepicker.regional['']);
 $(this).datepicker($.extend($.datepicker.regional['<?php echo esc_js( $options['locale'] ) ?>'],{dateFormat:'<?php echo esc_js( $frmpro_settings->cal_date_format ) ?>',changeMonth:true,changeYear:true,yearRange:'<?php echo esc_js( $date_options['options']['yearRange'] ) ?>',defaultDate:'<?php echo esc_js( $date_options['options']['defaultDate'] ); ?>'<?php
 echo $custom_options;
@@ -274,7 +274,7 @@ echo $custom_options;
 
                 if ( $calc_field->type == 'date' ) {
                     if ( ! isset($frmpro_settings) ) {
-                        $frmpro_settings = new FrmProSettings();
+						$frmpro_settings = FrmProAppHelper::get_settings();
                     }
                     $calc_rules['date'] = $frmpro_settings->cal_date_format;
                 }
@@ -287,10 +287,9 @@ echo $custom_options;
 			$calc_rules['triggers'] = array_values( $triggers );
         }
 
-		$var_name = '__FRMCALC';
 		echo 'var frmcalcs=' . json_encode( $calc_rules ) . ";\n";
-		echo 'if(typeof ' . $var_name . ' == "undefined"){' . $var_name . '=frmcalcs;}';
-		echo 'else{' . $var_name . '=jQuery.extend(true,{},' . $var_name . ',frmcalcs);}';
+		echo 'if(typeof __FRMCALC == "undefined"){__FRMCALC=frmcalcs;}';
+		echo 'else{__FRMCALC=jQuery.extend(true,{},__FRMCALC,frmcalcs);}';
     }
 
 	public static function get_calc_rule_for_field( $atts ) {
@@ -391,7 +390,7 @@ echo $custom_options;
     }
 
 	public static function get_default_opts() {
-		$frmpro_settings = new FrmProSettings();
+		$frmpro_settings = FrmProAppHelper::get_settings();
 
 		return array(
 			'edit_value'           => $frmpro_settings->update_value,
@@ -422,6 +421,11 @@ echo $custom_options;
 				'hide_opt'         => array(),
 				'hide_cond'        => array(),
 			),
+			'open_status'          => '',
+			'closed_msg'           => '<p>' . __( 'This form is currently closed for submissions.', 'formidable-pro' ) . '</p>',
+			'open_date'            => current_time( 'Y-m-d H:i' ),
+			'close_date'           => '',
+			'max_entries'          => '',
 			'protect_files'        => 0,
 			'rootline'             => '',
 			'rootline_titles_on'   => 0,
@@ -457,32 +461,86 @@ echo $custom_options;
 
 		$form = FrmForm::getOne( $values['form_id'] );
 
-		if ( isset( $form->options['single_entry'] ) && $form->options['single_entry'] ) {
-			if ( ! self::user_can_submit_form( $form ) ) {
-				$frmpro_settings = new FrmProSettings();
-				$k = is_numeric( $form->options['single_entry_type'] ) ? 'field' . $form->options['single_entry_type'] : 'single_entry';
-				$errors[ $k ] = $frmpro_settings->already_submitted;
-				self::stop_form_submit();
-				return $errors;
-			}
+		if ( self::visitor_already_submitted( $form, $errors ) || self::maybe_form_closed( $form, $errors ) ) {
+			self::stop_form_submit();
+			return $errors;
 		}
-
-		global $wpdb;
-		$user_ID = get_current_user_id();
 
 		if ( self::has_another_page( $values['form_id'] ) ) {
 			self::stop_submit_if_more_pages( $values, $errors );
-		} else if ( $form->editable && isset( $form->options['single_entry'] ) && $form->options['single_entry'] && $form->options['single_entry_type'] == 'user' && $user_ID && ! FrmAppHelper::is_admin() ) {
-			$meta = FrmDb::get_var( $wpdb->prefix . 'frm_items', array( 'user_id' => $user_ID, 'form_id' => $form->id ) );
-
-			if ( $meta ) {
-				$frmpro_settings = new FrmProSettings();
-				$errors['single_entry'] = $frmpro_settings->already_submitted;
-				self::stop_form_submit();
-			}
+		} elseif ( self::user_allowed_one_editable_entry( $form, $errors ) ) {
+			self::stop_form_submit();
 		}
 
 		return $errors;
+	}
+
+	/**
+	 * @since 3.04
+	 *
+	 * @param object $form
+	 * @param array $errors
+	 *
+	 * @return bool and $errors by reference
+	 */
+	private static function visitor_already_submitted( $form, &$errors ) {
+		$has_error = false;
+		if ( isset( $form->options['single_entry'] ) && $form->options['single_entry'] ) {
+			if ( ! self::user_can_submit_form( $form ) ) {
+				$frmpro_settings = FrmProAppHelper::get_settings();
+				$k = is_numeric( $form->options['single_entry_type'] ) ? 'field' . $form->options['single_entry_type'] : 'single_entry';
+				$errors[ $k ] = $frmpro_settings->already_submitted;
+				$has_error = true;
+			}
+		}
+		return $has_error;
+	}
+
+	/**
+	 * @since 3.04
+	 *
+	 * @param object $form
+	 * @param array $errors
+	 *
+	 * @return bool and $errors by reference
+	 */
+	private static function user_allowed_one_editable_entry( $form, &$errors ) {
+		$has_error = false;
+		$user_ID = get_current_user_id();
+		$user_limited_entry = $user_ID && $form->editable && isset( $form->options['single_entry'] ) && $form->options['single_entry'] && $form->options['single_entry_type'] == 'user' && ! FrmAppHelper::is_admin();
+		if ( $user_limited_entry ) {
+			$entry_id = FrmDb::get_var(
+				'frm_items',
+				array(
+					'user_id' => $user_ID,
+					'form_id' => $form->id,
+				)
+			);
+
+			if ( $entry_id ) {
+				$frmpro_settings = FrmProAppHelper::get_settings();
+				$errors['single_entry'] = $frmpro_settings->already_submitted;
+				$has_error = true;
+			}
+		}
+		return $has_error;
+	}
+
+	/**
+	 * @since 3.04
+	 *
+	 * @param object $form
+	 * @param array $errors
+	 *
+	 * @return bool and $errors by reference
+	 */
+	private static function maybe_form_closed( $form, &$errors ) {
+		$has_error = false;
+		if ( ! FrmProForm::is_open( $form ) ) {
+			$errors['open_status'] = do_shortcode( $form->options['closed_msg'] );
+			$has_error = true;
+		}
+		return $has_error;
 	}
 
 	/**

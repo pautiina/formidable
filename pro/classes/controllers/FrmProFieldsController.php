@@ -226,8 +226,8 @@ class FrmProFieldsController {
 	public static function add_separate_value_opt_label( $field ) {
         $class = $field['separate_value'] ? '' : ' frm_hidden';
         echo '<div class="frm-show-click">';
-		echo '<div class="field_' . $field['id'] . '_option_key frm_option_val_label' . $class . '" >' . __( 'Option Label', 'formidable-pro' ) . '</div>';
-		echo '<div class="field_' . $field['id'] . '_option_key frm_option_key_label' . $class . '" >' . __( 'Saved Value', 'formidable-pro' ) . '</div>';
+		echo '<div class="field_' . esc_attr( $field['id'] ) . '_option_key frm_option_val_label' . esc_attr( $class ) . '" >' . esc_html__( 'Option Label', 'formidable-pro' ) . '</div>';
+		echo '<div class="field_' . esc_attr( $field['id'] ) . '_option_key frm_option_key_label' . esc_attr( $class ) . '" >' . esc_html__( 'Saved Value', 'formidable-pro' ) . '</div>';
         echo '</div>';
     }
 
@@ -336,6 +336,9 @@ class FrmProFieldsController {
 	 *
 	 * @since 2.02.06
 	 * @param array $field
+	 *
+	 * @deprecated 3.0
+	 * @codeCoverageIgnore
 	 */
 	public static function show_format_option( $field ) {
 		_deprecated_function( __FUNCTION__, '3.0', 'FrmFieldsController::show_format_option' );
@@ -395,8 +398,8 @@ class FrmProFieldsController {
             $selected_field = $form_id;
 
             if ( $selected_field == 'taxonomy' ) {
-				echo '<span class="howto">' . __( 'Select a taxonomy on the Form Actions tab of the Form Settings page', 'formidable-pro' ) . '</span>';
-				echo '<input type="hidden" name="field_options[form_select_' . $current_field_id . ']" value="taxonomy" />';
+				echo '<span class="howto">' . esc_html__( 'Select a taxonomy on the Form Actions tab of the Form Settings page', 'formidable-pro' ) . '</span>';
+				echo '<input type="hidden" name="field_options[form_select_' . esc_attr( $current_field_id ) . ']" value="taxonomy" />';
             }
         }
 
@@ -832,6 +835,10 @@ class FrmProFieldsController {
 		}
 	}
 
+	/**
+	 * @deprecated 2.03
+	 * @codeCoverageIgnore
+	 */
 	public static function ajax_time_options() {
 		_deprecated_function( __FUNCTION__, '2.03', 'FrmProTimeFieldsController::ajax_time_options' );
 		FrmProTimeFieldsController::ajax_time_options();
@@ -846,13 +853,13 @@ class FrmProFieldsController {
 		global $current_screen;
 		if ( $current_screen && 'upload' == $current_screen->base && current_user_can('frm_edit_entries') ) {
 			echo '<label for="frm-attachment-filter" class="screen-reader-text">';
-			echo __( 'Show form uploads', 'formidable-pro' );
+			echo esc_html__( 'Show form uploads', 'formidable-pro' );
 			echo '</label>';
 
 			$filtered = FrmAppHelper::get_param( 'frm-attachment-filter', '', 'get', 'absint' );
 			echo '<select name="frm-attachment-filter" id="frm-attachment-filter">';
-			echo '<option value="">' . __( 'Hide form uploads', 'formidable-pro' ) . '</option>';
-			echo '<option value="1" ' . selected( $filtered, 1 ) . '>' . __( 'Show form uploads', 'formidable-pro' ) . '</option>';
+			echo '<option value="">' . esc_html__( 'Hide form uploads', 'formidable-pro' ) . '</option>';
+			echo '<option value="1" ' . selected( $filtered, 1 ) . '>' . esc_html__( 'Show form uploads', 'formidable-pro' ) . '</option>';
 			echo '</select>';
 		}
 	}
@@ -991,7 +998,7 @@ class FrmProFieldsController {
 			$form_id = FrmProField::create_repeat_form( 0, array( 'parent_form_id' => $parent_form_id, 'field_name' => $new_form_name ) );
 
 			// New form_select
-			echo $form_id;
+			echo absint( $form_id );
 		}
 
         if ( $form_id ) {
@@ -1132,13 +1139,15 @@ class FrmProFieldsController {
 	}
 
 	/**
-	*
-	* Update the repeating form name when a repeating section name is updated
-	*
-	* @since 2.0.12
-	*
-	* @param array $atts
-	*/
+	 *
+	 * Update the repeating form name when a repeating section name is updated
+	 *
+	 * @since 2.0.12
+	 * @deprecated 2.04
+	 * @codeCoverageIgnore
+	 *
+	 * @param array $atts
+	 */
 	public static function update_repeating_form_name( $atts ) {
 		_deprecated_function( __FUNCTION__, '3.0.03', 'FrmProFieldsController::update_repeater_form_name' );
 		$field = FrmField::getOne( $atts['id'] );
@@ -1243,6 +1252,7 @@ class FrmProFieldsController {
 
 	/**
 	 * @deprecated 3.0
+	 * @codeCoverageIgnore
 	 */
 	public static function show_normal_field( $show ) {
 		_deprecated_function( __METHOD__, '3.0' );
@@ -1251,6 +1261,7 @@ class FrmProFieldsController {
 
 	/**
 	 * @deprecated 3.0
+	 * @codeCoverageIgnore
 	 */
 	public static function &normal_field_html( $show ) {
 		_deprecated_function( __METHOD__, '3.0' );
@@ -1259,6 +1270,7 @@ class FrmProFieldsController {
 
 	/**
 	 * @deprecated 3.0
+	 * @codeCoverageIgnore
 	 */
 	public static function show_other() {
 		_deprecated_function( __METHOD__, '3.0' );
@@ -1266,6 +1278,7 @@ class FrmProFieldsController {
 
 	/**
 	 * @deprecated 3.0
+	 * @codeCoverageIgnore
 	 */
 	public static function show( $field, $name = '' ) {
 		_deprecated_function( __FUNCTION__, '3.0', 'FrmFieldType::show_on_form_builder' );
@@ -1281,6 +1294,7 @@ class FrmProFieldsController {
 
 	/**
 	 * @deprecated 3.0
+	 * @codeCoverageIgnore
 	 */
 	public static function display_field_options( $display ) {
 		_deprecated_function( __FUNCTION__, '3.0', 'FrmFieldType Modals' );
@@ -1289,6 +1303,7 @@ class FrmProFieldsController {
 
 	/**
 	 * @deprecated 3.0
+	 * @codeCoverageIgnore
 	 */
 	public static function form_fields( $field, $field_name, $atts ) {
 		_deprecated_function( __FUNCTION__, '3.0', 'FrmFieldType Modals' );
@@ -1296,6 +1311,7 @@ class FrmProFieldsController {
 
 	/**
 	 * @deprecated 2.03.10
+	 * @codeCoverageIgnore
 	 */
 	public static function prepare_single_field_for_duplication( $field_values ) {
 		_deprecated_function( __FUNCTION__, '2.03.10', 'custom code' );

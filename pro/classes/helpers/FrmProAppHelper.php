@@ -34,6 +34,19 @@ class FrmProAppHelper {
         return $frmpro_settings;
     }
 
+	/**
+	 * Only load the Pro updater once on a page
+	 *
+	 * @since 3.04.03
+	 */
+	public static function get_updater() {
+		global $frmpro_updater;
+		if ( empty( $frmpro_updater ) ) {
+			$frmpro_updater = new FrmProEddController();
+		}
+		return $frmpro_updater;
+	}
+
     /**
      * Get the current date in the display format
      * Used by [date] shortcode
@@ -620,6 +633,9 @@ class FrmProAppHelper {
 
     /**
      * Let WordPress process the uploads
+	 *
+	 * @codeCoverageIgnore
+	 *
      * @param int $field_id
      */
 	public static function upload_file( $field_id ) {
@@ -627,11 +643,17 @@ class FrmProAppHelper {
         return FrmProFileField::upload_file( $field_id );
     }
 
+	/**
+	 * @codeCoverageIgnore
+	 */
 	public static function upload_dir( $uploads ) {
 		_deprecated_function( __FUNCTION__, '2.02', 'FrmProFileField::upload_dir' );
         return FrmProFileField::upload_dir( $uploads );
     }
 
+	/**
+	 * @codeCoverageIgnore
+	 */
 	public static function get_time_format_for_field( $field ) {
 		_deprecated_function( __FUNCTION__, '3.02.01', 'FrmProFieldTime->get_time_format_for_field' );
 		$time_format = FrmField::get_option( $field, 'clock', 12 );

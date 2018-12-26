@@ -58,10 +58,11 @@ class FrmProEntriesHelper {
         return $action;
     }
 
-    /**
-     * Check if the current user already has an entry
-     * @since 2.0
-     */
+	/**
+	 * Check if the current user already has an entry
+	 * @since 2.0
+	 * @return array|false
+	 */
     public static function check_for_user_entry( $user_ID, $form, $is_draft ) {
         $query = array( 'user_id' => $user_ID, 'form_id' => $form->id);
         if ( $is_draft ) {
@@ -237,11 +238,17 @@ class FrmProEntriesHelper {
         return $link;
     }
 
+	/**
+	 * @codeCoverageIgnore
+	 */
 	public static function show_duplicate_link( $entry ) {
 		_deprecated_function( __METHOD__, '3.0' );
         echo self::duplicate_link($entry);
     }
 
+	/**
+	 * @codeCoverageIgnore
+	 */
 	public static function duplicate_link( $entry ) {
 		if ( current_user_can('frm_create_entries') ) {
 			_deprecated_function( __METHOD__, '3.0' );
@@ -287,7 +294,7 @@ class FrmProEntriesHelper {
 ?>
 		<div id="publishing-action">
 			<a href="<?php echo esc_url( add_query_arg( 'frm_action', 'edit' ) ) ?>" class="button-primary">
-				<?php _e( 'Edit', 'formidable-pro' ) ?>
+				<?php esc_html_e( 'Edit', 'formidable-pro' ); ?>
 			</a>
 		</div>
 <?php
@@ -318,7 +325,7 @@ class FrmProEntriesHelper {
 			?>
 			<div class="frm_uninstall alignleft actions">
 				<a href="?page=formidable-entries&amp;frm_action=destroy_all<?php echo esc_attr( $form_id ? '&form=' . absint( $form_id ) : '' ); ?>" class="button" data-frmverify="<?php esc_attr_e( 'Really permanently delete ALL entries in this form?', 'formidable-pro' ) ?>">
-					<?php _e( 'Delete ALL Entries', 'formidable-pro' ) ?>
+					<?php esc_html_e( 'Delete ALL Entries', 'formidable-pro' ); ?>
 				</a>
 			</div>
 <?php
@@ -349,7 +356,7 @@ class FrmProEntriesHelper {
 		?>
 		<div class="alignleft actions">
 			<a href="<?php echo esc_url( add_query_arg( $page_params, admin_url( 'admin-ajax.php' ) ) ) ?>" class="button">
-				<?php _e( 'Download CSV', 'formidable-pro' ); ?>
+				<?php esc_html_e( 'Download CSV', 'formidable-pro' ); ?>
 			</a>
 		</div>
 		<?php
@@ -638,20 +645,44 @@ class FrmProEntriesHelper {
 	 * @return array $user_ids
 	 */
 	private static function replace_search_param_with_user_ids( $search_param ) {
-		$user_ids = array();
+		$user_ids = array_filter( $search_param, 'is_numeric' );
 
-		foreach ( $search_param as $single_value ) {
-			if ( is_numeric( $single_value ) ) {
-				$user_ids[] = $single_value;
-			} else {
-				$user_id = FrmAppHelper::get_user_id_param( $single_value );
-				if ( $user_id ) {
-					$user_ids[] = $user_id;
-				}
-			}
+		$add_user_ids = self::search_users( $search_param );
+		if ( ! empty( $add_user_ids ) ) {
+			$user_ids = array_merge( $user_ids, $add_user_ids );
+		}
+
+		if ( empty( $user_ids ) ) {
+			// prevent all results from being returned when there are no matches
+			$user_ids = array( 'none' );
 		}
 
 		return $user_ids;
+	}
+
+	/**
+	 * @since 3.03.03
+	 *
+	 * @param array $search
+	 * @return array
+	 */
+	private static function search_users( $search ) {
+		global $wpdb;
+
+		$single_value = implode( ' ', $search );
+		if ( is_numeric( $single_value ) ) {
+			// don't search the user record for the id
+			return array();
+		}
+
+		$query = array(
+			'or' => 1,
+			'user_login like'    => $single_value,
+			'user_email like'    => $single_value,
+			'user_nicename like' => $single_value,
+			'display_name like'  => $single_value,
+		);
+		return FrmDb::get_col( $wpdb->users, $query, 'ID' );
 	}
 
 	/**

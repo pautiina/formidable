@@ -69,7 +69,7 @@ class FrmEntry {
         foreach ( $entry_exists as $entry_exist ) {
             $is_duplicate = true;
 
-            //add more checks here to make sure it's a duplicate
+			// make sure it's a duplicate
 			$metas = FrmEntryMeta::get_entry_meta_info( $entry_exist );
             $field_metas = array();
             foreach ( $metas as $meta ) {
@@ -78,11 +78,26 @@ class FrmEntry {
 
             // If prev entry is empty and current entry is not, they are not duplicates
             $filtered_vals = array_filter( $values['item_meta'] );
+			$field_metas   = array_filter( $field_metas );
             if ( empty( $field_metas ) && ! empty( $filtered_vals ) ) {
                 return false;
             }
 
-			$diff = array_diff_assoc( $field_metas, array_map( 'maybe_serialize', $values['item_meta'] ) );
+			// compare serialized values and not arrays
+			$new_meta = array_map( 'maybe_serialize', $filtered_vals );
+
+			if ( $field_metas === $new_meta ) {
+				$is_duplicate = true;
+				break;
+			}
+
+			if ( count( $field_metas ) !== count( $new_meta ) ) {
+				// TODO: compare values saved in the post also
+				$is_duplicate = false;
+				continue;
+			}
+
+			$diff = array_diff_assoc( $field_metas, $new_meta );
             foreach ( $diff as $field_id => $meta_value ) {
 				if ( ! empty( $meta_value ) ) {
                     $is_duplicate = false;
@@ -300,10 +315,14 @@ class FrmEntry {
         }
 
         global $wpdb;
-		$metas = FrmDb::get_results( $wpdb->prefix . 'frm_item_metas m LEFT JOIN ' . $wpdb->prefix . 'frm_fields f ON m.field_id=f.id', array(
-			'item_id' => $entry->id,
-			'field_id !' => 0,
-		), 'field_id, meta_value, field_key, item_id' );
+		$metas = FrmDb::get_results(
+			$wpdb->prefix . 'frm_item_metas m LEFT JOIN ' . $wpdb->prefix . 'frm_fields f ON m.field_id=f.id',
+			array(
+				'item_id' => $entry->id,
+				'field_id !' => 0,
+			),
+			'field_id, meta_value, field_key, item_id'
+		);
 
         $entry->metas = array();
 
@@ -641,10 +660,12 @@ class FrmEntry {
 		if ( isset( $values['description'] ) && ! empty( $values['description'] ) ) {
 			$description = maybe_serialize( $values['description'] );
 		} else {
-			$description = serialize( array(
-				'browser'  => FrmAppHelper::get_server_value( 'HTTP_USER_AGENT' ),
-				'referrer' => FrmAppHelper::get_server_value( 'HTTP_REFERER' ),
-			) );
+			$description = serialize(
+				array(
+					'browser'  => FrmAppHelper::get_server_value( 'HTTP_USER_AGENT' ),
+					'referrer' => FrmAppHelper::get_server_value( 'HTTP_REFERER' ),
+				)
+			);
 		}
 
 		return $description;

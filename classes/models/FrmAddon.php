@@ -510,7 +510,7 @@ class FrmAddon {
 					$response['status'] = $license_data['license'];
 				}
 			} else {
-				$response['status'] = $license_data;
+				$response['status'] = 'valid';
 			}
 		} catch ( Exception $e ) {
 			$response['status'] = $e->getMessage();
